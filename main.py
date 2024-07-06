@@ -2,6 +2,14 @@ import streamlit as st
 import converted_script as algorithms
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import roc_curve, auc
+
+# Set option to suppress Matplotlib warnings
+st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # Custom CSS
 custom_css = """
@@ -97,6 +105,31 @@ else:
     if algo == "k-Nearest Neighbours":
         k = st.text_input("Enter the Number of neighbours:")
 
+# Prediction and Visualization
+def plot_roc_curve(algo_name):
+    y_scores = algo_name.predict_proba(algorithms.X_test)[:, 1]
+
+    # Compute ROC curve and AUC
+    fpr, tpr, thresholds = roc_curve(algorithms.Y_test, y_scores)
+    roc_auc = auc(fpr, tpr)
+
+    # Plot ROC curve using Matplotlib
+    plt.figure()
+    plt.style.use("https://github.com/dhaitz/matplotlib-stylesheets/raw/master/pitayasmoothie-dark.mplstyle")
+    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic (ROC) Curve')
+    plt.legend(loc="lower right")
+    
+    # Display the plot using Streamlit's st.pyplot()
+    st.pyplot()
+
+    st.write('AUC:', roc_auc)
+
 # Prediction button
 if st.button("Start Prediction"):
     # st.write(f"Button pressed. form_submitted: {st.session_state['form_submitted']}")
@@ -105,16 +138,20 @@ if st.button("Start Prediction"):
         if compare:
             st.write("Comparison mode enabled.")
         else:
+            true_labels = [algorithms.Y_test] 
             unknown_sample = st.session_state["unknown_sample"]
             if algo == "Decision Trees":
                 prediction = algorithms.dt_model.predict(unknown_sample)
+                plot_roc_curve(algorithms.dt_model)
             elif algo == "Logistic Regression":
                 prediction = algorithms.logistic_model.predict(unknown_sample)
+                plot_roc_curve(algorithms.logistic_model)
             elif algo == "k-Nearest Neighbours":
                 k = int(k)
                 algorithms.knn_model = KNeighborsClassifier(n_neighbors=k)
                 algorithms.knn_model.fit(algorithms.X_train, algorithms.Y_train)
                 prediction = algorithms.knn_model.predict(unknown_sample)
+                plot_roc_curve(algorithms.knn_model)
             
             st.write("Prediction Result:", prediction)
             if prediction[0] == 1:

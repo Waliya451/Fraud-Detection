@@ -130,15 +130,15 @@ def plot_roc_curve(algo_name):
 
 def print_result(prediction):
     if prediction[0] == 1:
-        st.markdown("<h2>It's a fake account</h2>",unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center;'>IT\'S A FAKE ACCOUNT</h2>",unsafe_allow_html=True)
     else:
-        st.markdown("<h2>It's not a fake account</h2>",unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center;'> IT\'S NOT A FAKE ACCOUNT</h2>",unsafe_allow_html=True)
 
 # Prediction button
 if st.button("Start Prediction"):
     # st.write(f"Button pressed. form_submitted: {st.session_state['form_submitted']}")
     if st.session_state["form_submitted"]:
-        st.write("Prediction Algorithm:", algo)
+        # st.write("Prediction Algorithm:", algo)
         if compare:
             st.write("Comparison mode enabled.")
         else:

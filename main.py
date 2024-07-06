@@ -130,27 +130,6 @@ def plot_roc_curve(algo_name):
     # Display the plot using Streamlit's st.pyplot()
     st.pyplot()
 
-def plot_combined_roc_curve(algorithms_dict):
-    plt.figure()
-    plt.style.use("https://github.com/dhaitz/matplotlib-stylesheets/raw/master/pitayasmoothie-dark.mplstyle")
-    
-    for algo_name, model in algorithms_dict.items():
-        y_scores = model.predict_proba(algorithms.X_test)[:, 1]
-        fpr, tpr, _ = roc_curve(algorithms.Y_test, y_scores)
-        roc_auc = auc(fpr, tpr)
-        plt.plot(fpr, tpr, lw=2, label=f'{algo_name} (area = {roc_auc:.2f})')
-
-    plt.plot([0, 1], [0, 1], lw=2, linestyle='--')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic (ROC) Curve')
-    plt.legend(loc="lower right")
-    
-    # Display the plot using Streamlit's st.pyplot()
-    st.pyplot()
-
 def plot_precision_recall_curve(algorithm_name, y_true, y_scores):
     precision, recall, _ = precision_recall_curve(y_true, y_scores)
     avg_precision = average_precision_score(y_true, y_scores)
@@ -217,9 +196,10 @@ def comparision(a):
         k = int(k)
         algorithms.knn_model = KNeighborsClassifier(n_neighbors=k)
         algorithms.knn_model.fit(algorithms.X_train, algorithms.Y_train)
+        X_test_prediction2 = algorithms.knn_model.predict(algorithms.X_test)
         prediction = algorithms.knn_model.predict(unknown_sample)
         print_result(prediction)
-        compare_report(algorithms.X_test_prediction2)
+        compare_report(X_test_prediction2)
         y_scores = algorithms.knn_model.predict_proba(algorithms.X_test)[:, 1]
         plot_precision_recall_curve("k-Nearest Neighbours", algorithms.Y_test, y_scores)
 
@@ -291,9 +271,10 @@ if st.button("Start Prediction"):
                 k = int(k)
                 algorithms.knn_model = KNeighborsClassifier(n_neighbors=k)
                 algorithms.knn_model.fit(algorithms.X_train, algorithms.Y_train)
+                X_test_prediction2 = algorithms.knn_model.predict(algorithms.X_test)
                 prediction = algorithms.knn_model.predict(unknown_sample)
                 print_result(prediction)
                 plot_roc_curve(algorithms.knn_model)
-                print_classification_report(algorithms.X_test_prediction2)
+                print_classification_report(X_test_prediction2)
     else:
         st.write("Prediction not executed due to missing input or invalid state.")

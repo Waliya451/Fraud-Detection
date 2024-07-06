@@ -116,8 +116,8 @@ def plot_roc_curve(algo_name):
     # Plot ROC curve using Matplotlib
     plt.figure()
     plt.style.use("https://github.com/dhaitz/matplotlib-stylesheets/raw/master/pitayasmoothie-dark.mplstyle")
-    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
-    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.plot(fpr, tpr, color='darkgreen', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='red', lw=2, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
@@ -128,7 +128,11 @@ def plot_roc_curve(algo_name):
     # Display the plot using Streamlit's st.pyplot()
     st.pyplot()
 
-    st.write('AUC:', roc_auc)
+def print_result(prediction):
+    if prediction[0] == 1:
+        st.markdown("<h2>It's a fake account</h2>",unsafe_allow_html=True)
+    else:
+        st.markdown("<h2>It's not a fake account</h2>",unsafe_allow_html=True)
 
 # Prediction button
 if st.button("Start Prediction"):
@@ -142,21 +146,18 @@ if st.button("Start Prediction"):
             unknown_sample = st.session_state["unknown_sample"]
             if algo == "Decision Trees":
                 prediction = algorithms.dt_model.predict(unknown_sample)
+                print_result(prediction)
                 plot_roc_curve(algorithms.dt_model)
             elif algo == "Logistic Regression":
                 prediction = algorithms.logistic_model.predict(unknown_sample)
+                print_result(prediction)
                 plot_roc_curve(algorithms.logistic_model)
             elif algo == "k-Nearest Neighbours":
                 k = int(k)
                 algorithms.knn_model = KNeighborsClassifier(n_neighbors=k)
                 algorithms.knn_model.fit(algorithms.X_train, algorithms.Y_train)
                 prediction = algorithms.knn_model.predict(unknown_sample)
+                print_result(prediction)
                 plot_roc_curve(algorithms.knn_model)
-            
-            st.write("Prediction Result:", prediction)
-            if prediction[0] == 1:
-                st.markdown("It's a fake account")
-            else:
-                st.markdown("It's not fake")
     else:
         st.write("Prediction not executed due to missing input or invalid state.")

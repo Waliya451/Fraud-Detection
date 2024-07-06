@@ -5,8 +5,9 @@ from sklearn.neighbors import KNeighborsClassifier
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix, classification_report,accuracy_score
 from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import precision_recall_curve, average_precision_score
 
 # Set option to suppress Matplotlib warnings
 st.set_option('deprecation.showPyplotGlobalUse', False)
@@ -96,7 +97,8 @@ if submit_state:
 # Algorithm selection
 compare = st.checkbox("Compare Algorithms")
 if compare:
-    algo = st.multiselect("Choose the Algorithm for prediction:", options=("Decision Trees", "Linear Regression", "k-Nearest Neighbours"))
+    algo = st.multiselect("Choose the Algorithm for prediction:", options=("Decision Trees", "Logistic Regression", "k-Nearest Neighbours"))
+    print(algo)
     for a in algo:
         if a == "k-Nearest Neighbours":
             k = st.text_input("Enter the Number of neighbours:")
@@ -116,8 +118,8 @@ def plot_roc_curve(algo_name):
     # Plot ROC curve using Matplotlib
     plt.figure()
     plt.style.use("https://github.com/dhaitz/matplotlib-stylesheets/raw/master/pitayasmoothie-dark.mplstyle")
-    plt.plot(fpr, tpr, color='darkgreen', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
-    plt.plot([0, 1], [0, 1], color='red', lw=2, linestyle='--')
+    plt.plot(fpr, tpr, lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], lw=2, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
@@ -128,11 +130,98 @@ def plot_roc_curve(algo_name):
     # Display the plot using Streamlit's st.pyplot()
     st.pyplot()
 
+def plot_combined_roc_curve(algorithms_dict):
+    plt.figure()
+    plt.style.use("https://github.com/dhaitz/matplotlib-stylesheets/raw/master/pitayasmoothie-dark.mplstyle")
+    
+    for algo_name, model in algorithms_dict.items():
+        y_scores = model.predict_proba(algorithms.X_test)[:, 1]
+        fpr, tpr, _ = roc_curve(algorithms.Y_test, y_scores)
+        roc_auc = auc(fpr, tpr)
+        plt.plot(fpr, tpr, lw=2, label=f'{algo_name} (area = {roc_auc:.2f})')
+
+    plt.plot([0, 1], [0, 1], lw=2, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic (ROC) Curve')
+    plt.legend(loc="lower right")
+    
+    # Display the plot using Streamlit's st.pyplot()
+    st.pyplot()
+
+def plot_precision_recall_curve(algorithm_name, y_true, y_scores):
+    precision, recall, _ = precision_recall_curve(y_true, y_scores)
+    avg_precision = average_precision_score(y_true, y_scores)
+
+    plt.plot(recall, precision, label=f'{algorithm_name} (AP={avg_precision:.2f})')
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Precision-Recall Curve')
+    plt.legend(loc='best')
+
 def print_result(prediction):
-    if prediction[0] == 1:
-        st.markdown("<h2 style='text-align: center;'>IT\'S A FAKE ACCOUNT</h2>",unsafe_allow_html=True)
+    if not compare:
+        if prediction[0] == 1:
+            st.markdown("<h1 style='text-align: center;color: red;'>IT\'S A FAKE ACCOUNT<br></h1>",unsafe_allow_html=True)
+        else:
+            st.markdown("<h1 style='text-align: center;color: green;'> IT\'S NOT A FAKE ACCOUNT<br></h1>",unsafe_allow_html=True)
     else:
-        st.markdown("<h2 style='text-align: center;'> IT\'S NOT A FAKE ACCOUNT</h2>",unsafe_allow_html=True)
+        if prediction[0] == 1:
+            st.markdown("<h4 style='text-align: center;color: red;'>IT\'S A FAKE ACCOUNT</h4>",unsafe_allow_html=True)
+        else:
+            st.markdown("<h4 style='text-align: center;color: green;'> IT\'S NOT A FAKE ACCOUNT</h4>",unsafe_allow_html=True)
+
+def compare_report(pred):
+    target_names = ['Human', 'Bot']
+    report = classification_report(algorithms.Y_test, pred, target_names=target_names, output_dict=True)
+
+    st.markdown("<h5 style='text-align:center;'>Classification Report</h5>", unsafe_allow_html=True)
+    st.write(pd.DataFrame(report))
+
+    test_data_accuracy = accuracy_score(pred, algorithms.Y_test)
+    st.write("The accuracy is " + str(test_data_accuracy * 100) + "%")
+    confusion_matrix(algorithms.Y_test, pred)
+
+def print_classification_report(test_pred):
+    test_data_accuracy = accuracy_score(test_pred, algorithms.Y_test)
+    st.write("The accuracy is " + str(test_data_accuracy * 100) + "%")
+    confusion_matrix(algorithms.Y_test, test_pred)
+    
+    st.markdown("<h3>Confusion Matrix</h3>", unsafe_allow_html=True)
+    st.write(pd.DataFrame(confusion_matrix(algorithms.Y_test, test_pred)))
+
+    target_names = ['Human', 'Bot']
+    report = classification_report(algorithms.Y_test, test_pred, target_names=target_names, output_dict=True)
+
+    st.markdown("<h3>Classification Report</h3>", unsafe_allow_html=True)
+    st.write(pd.DataFrame(report))
+
+def comparision(a):
+    unknown_sample = st.session_state["unknown_sample"]
+    if a == "Decision Trees":
+        prediction = algorithms.dt_model.predict(unknown_sample)
+        print_result(prediction)
+        compare_report(algorithms.X_test_prediction3)
+        y_scores = algorithms.dt_model.predict_proba(algorithms.X_test)[:, 1]
+        plot_precision_recall_curve("Decision Trees", algorithms.Y_test, y_scores)
+    elif a == "Logistic Regression":
+        prediction = algorithms.logistic_model.predict(unknown_sample)
+        print_result(prediction)
+        compare_report(algorithms.X_test_prediction1)
+        y_scores = algorithms.logistic_model.predict_proba(algorithms.X_test)[:, 1]
+        plot_precision_recall_curve("Logistic Regression", algorithms.Y_test, y_scores)
+    else:
+        global k 
+        k = int(k)
+        algorithms.knn_model = KNeighborsClassifier(n_neighbors=k)
+        algorithms.knn_model.fit(algorithms.X_train, algorithms.Y_train)
+        prediction = algorithms.knn_model.predict(unknown_sample)
+        print_result(prediction)
+        compare_report(algorithms.X_test_prediction2)
+        y_scores = algorithms.knn_model.predict_proba(algorithms.X_test)[:, 1]
+        plot_precision_recall_curve("k-Nearest Neighbours", algorithms.Y_test, y_scores)
 
 # Prediction button
 if st.button("Start Prediction"):
@@ -140,7 +229,51 @@ if st.button("Start Prediction"):
     if st.session_state["form_submitted"]:
         # st.write("Prediction Algorithm:", algo)
         if compare:
-            st.write("Comparison mode enabled.")
+            if len(algo) == 1:
+                st.warning("Please select more than one algorithm for comparision")
+            else:
+                plt.figure(figsize=(10, 6))
+                if len(algo) == 2:
+                    col1,col2 = st.columns(2)
+
+                    # Left column (col1)
+                    with col1:
+                        st.write(f"**{algo[0]}**")
+                        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                        comparision(algo[0])
+                        st.markdown("</div>", unsafe_allow_html=True)
+
+                    # Right column (col2)
+                    with col2:
+                        st.write(f"**{algo[1]}**")
+                        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                        comparision(algo[1])
+                        st.markdown("</div>", unsafe_allow_html=True)
+                elif len(algo) == 3:
+                    col1,col2,col3 = st.columns(3)
+
+                    # Left column (col1)
+                    with col1:
+                        st.write(f"**{algo[0]}**")
+                        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                        comparision(algo[0])
+                        st.markdown("</div>", unsafe_allow_html=True)
+
+                    # Middle column (col2)
+                    with col2:
+                        st.write(f"**{algo[1]}**")
+                        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                        comparision(algo[1])
+                        st.markdown("</div>", unsafe_allow_html=True)
+                    
+                    # Right column (col3)
+                    with col3:
+                        st.write(f"**{algo[2]}**")
+                        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                        comparision(algo[2])
+                        st.markdown("</div>", unsafe_allow_html=True)
+                st.pyplot()
+                            
         else:
             true_labels = [algorithms.Y_test] 
             unknown_sample = st.session_state["unknown_sample"]
@@ -148,10 +281,12 @@ if st.button("Start Prediction"):
                 prediction = algorithms.dt_model.predict(unknown_sample)
                 print_result(prediction)
                 plot_roc_curve(algorithms.dt_model)
+                print_classification_report(algorithms.X_test_prediction3)
             elif algo == "Logistic Regression":
                 prediction = algorithms.logistic_model.predict(unknown_sample)
                 print_result(prediction)
                 plot_roc_curve(algorithms.logistic_model)
+                print_classification_report(algorithms.X_test_prediction1)
             elif algo == "k-Nearest Neighbours":
                 k = int(k)
                 algorithms.knn_model = KNeighborsClassifier(n_neighbors=k)
@@ -159,5 +294,6 @@ if st.button("Start Prediction"):
                 prediction = algorithms.knn_model.predict(unknown_sample)
                 print_result(prediction)
                 plot_roc_curve(algorithms.knn_model)
+                print_classification_report(algorithms.X_test_prediction2)
     else:
         st.write("Prediction not executed due to missing input or invalid state.")

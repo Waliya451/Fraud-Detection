@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 import converted_script as algorithms
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier

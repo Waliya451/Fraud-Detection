@@ -218,14 +218,16 @@ if st.button("Start Prediction"):
 
                     # Left column (col1)
                     with col1:
-                        st.write(f"**{algo[0]}**")
+                        algo_name = algo[0]
+                        st.markdown(f"<div style='text-align: center; font-weight: bold;font-size: 20px'>{algo_name}</div>", unsafe_allow_html=True)
                         st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-                        comparision(algo[0])
+                        comparision(algo_name)
                         st.markdown("</div>", unsafe_allow_html=True)
 
                     # Right column (col2)
                     with col2:
-                        st.write(f"**{algo[1]}**")
+                        algo_name = algo[1]
+                        st.markdown(f"<div style='text-align: center; font-weight: bold;font-size: 20px'>{algo_name}</div>", unsafe_allow_html=True)
                         st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
                         comparision(algo[1])
                         st.markdown("</div>", unsafe_allow_html=True)
@@ -234,21 +236,24 @@ if st.button("Start Prediction"):
 
                     # Left column (col1)
                     with col1:
-                        st.write(f"**{algo[0]}**")
+                        algo_name = algo[0]
+                        st.markdown(f"<div style='text-align: center; font-weight: bold;font-size: 20px'>{algo_name}</div>", unsafe_allow_html=True)
                         st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
                         comparision(algo[0])
                         st.markdown("</div>", unsafe_allow_html=True)
 
                     # Middle column (col2)
                     with col2:
-                        st.write(f"**{algo[1]}**")
+                        algo_name = algo[1]
+                        st.markdown(f"<div style='text-align: center; font-weight: bold;font-size: 20px;'>{algo_name}</div>", unsafe_allow_html=True)
                         st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
                         comparision(algo[1])
                         st.markdown("</div>", unsafe_allow_html=True)
                     
                     # Right column (col3)
                     with col3:
-                        st.write(f"**{algo[2]}**")
+                        algo_name = algo[2]
+                        st.markdown(f"<div style='text-align: center; font-weight: bold;font-size: 20px'>{algo_name}</div>", unsafe_allow_html=True)
                         st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
                         comparision(algo[2])
                         st.markdown("</div>", unsafe_allow_html=True)

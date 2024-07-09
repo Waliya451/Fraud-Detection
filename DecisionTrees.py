@@ -106,3 +106,51 @@ class DecisionTree:
         if x[node.feature] <= node.threshold:
             return self._traverseTree(x, node.left)
         return self._traverseTree(x, node.right)
+    
+# #Implementing DT without Python Package
+
+from DecisionTrees import DecisionTree
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+import numpy as np
+import pandas as pd
+from DecisionTrees import DecisionTree
+from sklearn.preprocessing import LabelEncoder
+
+dataset = pd.read_csv("./twitter_human_bots_dataset.csv")
+dataset.drop(columns=['created_at',
+                      'description',
+                      'lang',
+                      'profile_background_image_url',
+                      'id',
+                      'screen_name',
+                      'location',
+                      'profile_image_url'], inplace=True)
+
+dataset["default_profile"] = dataset["default_profile"].astype(str)
+dataset["default_profile"] = dataset["default_profile"].replace(['True', 'False'], ['1', '0'])
+dataset["default_profile_image"] = dataset["default_profile_image"].astype(str)
+dataset["default_profile_image"] = dataset["default_profile_image"].replace(['True', 'False'], ['1', '0'])
+dataset["geo_enabled"] = dataset["geo_enabled"].astype(str)
+dataset["geo_enabled"] = dataset["geo_enabled"].replace(['True', 'False'], ['1', '0'])
+dataset["verified"] = dataset["verified"].astype(str)
+dataset["verified"] = dataset["verified"].replace(['True', 'False'],['1','0'])
+
+X = dataset.drop('account_type', axis=1).values
+y = dataset['account_type'].values
+
+# Encode the labels
+le = LabelEncoder()
+y = le.fit_transform(y)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+classifier = DecisionTree(max_depth=5)
+classifier.fit(X_train, y_train)
+predictions = classifier.predict(X_test)
+
+def accuracy(y_test, y_pred):
+    return np.sum(y_test == y_pred) / len(y_test)
+
+acc = accuracy(y_test, predictions)
+print(f"Accuracy: {acc}")

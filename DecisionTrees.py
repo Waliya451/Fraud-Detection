@@ -25,6 +25,7 @@ class DecisionTree:
         pass
 
     def _growTree(self, X, y, depth=0):
+
         n_samples, n_feats = X.shape
         n_labels = len(np.unique(y))
 
@@ -44,7 +45,11 @@ class DecisionTree:
         left = self._growTree(X[left_idxs, :], y[left_idxs], depth+1)
         right = self._growTree(X[right_idxs, :], y[right_idxs], depth+1)
         return Node(best_Feature, best_thresh, left, right)
+    
     def _bestSplit(self, X, y, feat_idxs):
+        '''Finds the optimal feature and threshold for splitting the data, 
+           maximizing information gain.'''
+        
         best_gain = -1
         split_idx, split_threshold = None, None
         for feat_idx in feat_idxs:
@@ -62,34 +67,44 @@ class DecisionTree:
         return split_idx, split_threshold
     
     def _informationGain(self, y, X_column, thr):
+        '''Measures the improvement in impurity by splitting the data'''
+
         #parent Entropy:
         parent_entropy = self._entropy(y)
 
         #Create Children:
         left_idx,right_idx = self._split(X_column, thr) 
-        if len(left_idx) == 0 or len(right_idx) == 0:
+        if len(left_idx) == 0 or len(right_idx) == 0:   #IF ONE SPLIT IS NULL, INVALID SPLIT
             return 0
 
         #Calculate the weighter abg. entropy of children
         n = len(y)
-        n_l, n_r = len(left_idx), len(right_idx)
-        e_l, e_r = self._entropy(y[left_idx]), self._entropy(y[right_idx])
-        child_entropy = (n_l / n) * e_l + (n_r / n) * e_r
+        n_l, n_r = len(left_idx), len(right_idx)            #NUM. OF SAMPLES IN LEFT & RIGHT 
+        e_l, e_r = self._entropy(y[left_idx]), self._entropy(y[right_idx])  #ENTROPIES OF LEFT & RIGHT
+        child_entropy = (n_l / n) * e_l + (n_r / n) * e_r   #COMPUTES WEIGHTED AVG ENTROPY OF CHILD NODE
 
 
-        #calculate the IG
+#         #calculate the IG
+#         Parent Entropy: Measures impurity before the split.
+#         Child Entropy: Measures impurity after the split.
+#         Information Gain: The reduction in impurity due to the split.
+
         information_gain = parent_entropy - child_entropy
         return information_gain
 
     def _split(self, X_column, split_thresh):
+        '''Divides the data into subsets based on a threshold, aiding in tree construction'''
+
+        # argwhere(): Finds indices where the feature value is less/greater than or equal to the threshold.
         left_idxs = np.argwhere(X_column <= split_thresh).flatten()
         right_idxs = np.argwhere(X_column >= split_thresh).flatten()
         return left_idxs, right_idxs
                
 
     def _entropy(self, y):
-        hist = np.bincount(y)
-        ps = hist / len(y)
+        '''Quantifies the impurity of a set of labels, used to calculate information gain.'''
+        hist = np.bincount(y)   # bincount(y): Gets the count of each label in y
+        ps = hist / len(y)      # calc probabilities
         return -np.sum([p*np.log(p) for p in ps if p > 0])
 
     def _mostCommonLabel(self, y):
@@ -101,6 +116,7 @@ class DecisionTree:
         return np.array([self._traverseTree(x, self.root) for x in X])  
         
     def _traverseTree(self, x, node):
+        '''Navigates the tree to make predictions for new data points'''
         if node.isLeafNode():
             return node.value
         if x[node.feature] <= node.threshold:
